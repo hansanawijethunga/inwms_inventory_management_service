@@ -126,4 +126,40 @@ export class StockReceiptRepository implements IStockReceiptRepository {
       createdAt: row.created_at
     }));
   }
+
+  async findByShipmentId(shipmentId: string): Promise<StockReceiptHeader[]> {
+    const result = await sql`
+      SELECT * FROM "StockReceiptHeader" WHERE shipment_id = ${shipmentId}
+    `;
+    return result.map((row: any) => new StockReceiptHeader({
+      id: row.id,
+      shipmentId: row.shipment_id,
+      shipmentNumber: row.shipment_number,
+      lotNumber: row.lot_number,
+      inventoryDate: row.inventory_date,
+      companyId: row.company_id,
+      companyLegalName: row.company_legal_name,
+      notes: row.notes ?? undefined,
+      createdBy: row.created_by ?? undefined,
+      createdAt: row.created_at
+    }));
+  }
+
+  async findByLotNumber(lotNumber: string): Promise<StockReceiptHeader[]> {
+    const result = await sql`
+      SELECT * FROM "StockReceiptHeader" WHERE lot_number = ${lotNumber}
+    `;
+    return result.map((row: any) => new StockReceiptHeader({
+      id: row.id,
+      shipmentId: row.shipment_id,
+      shipmentNumber: row.shipment_number,
+      lotNumber: row.lot_number,
+      inventoryDate: row.inventory_date,
+      companyId: row.company_id,
+      companyLegalName: row.company_legal_name,
+      notes: row.notes ?? undefined,
+      createdBy: row.created_by ?? undefined,
+      createdAt: row.created_at
+    }));
+  }
 }
