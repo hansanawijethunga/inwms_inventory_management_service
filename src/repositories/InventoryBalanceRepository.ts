@@ -1,0 +1,101 @@
+import { InventoryBalance } from '../domain/InventoryBalance.js';
+import type { IInventoryBalanceRepository } from '../domain/interfaces/IInventoryBalanceRepository.js';
+import sql from '../infrastructure/db.js';
+
+export class InventoryBalanceRepository implements IInventoryBalanceRepository {
+  async save(balance: InventoryBalance): Promise<void> {
+    await sql`
+      INSERT INTO "InventoryBalance" (
+        company_id, product_id, product_name, product_code, block_id, block_address, condition, expiry_date, on_hand, reserved, available, uom, last_updated_at
+      ) VALUES (
+        ${balance.companyId},
+        ${balance.productId},
+        ${balance.productName},
+        ${balance.productCode},
+        ${balance.blockId},
+        ${balance.blockAddress},
+        ${balance.condition},
+        ${balance.expiryDate ?? null},
+        ${balance.onHand},
+        ${balance.reserved ?? null},
+        ${balance.available},
+        ${balance.uom},
+        ${balance.lastUpdatedAt}
+      )
+      ON CONFLICT (company_id, product_id, block_id, condition, expiry_date) DO UPDATE SET
+        product_name = EXCLUDED.product_name,
+        product_code = EXCLUDED.product_code,
+        block_address = EXCLUDED.block_address,
+        on_hand = EXCLUDED.on_hand,
+        reserved = EXCLUDED.reserved,
+        available = EXCLUDED.available,
+        uom = EXCLUDED.uom,
+        last_updated_at = EXCLUDED.last_updated_at;
+    `;
+  }
+
+  async findByKey(
+    companyId: string,
+    productId: string,
+    blockId: string,
+    condition: string,
+    expiryDate?: Date
+  ): Promise<InventoryBalance | null> {
+    const result = await sql`
+      SELECT * FROM "InventoryBalance"
+      WHERE company_id = ${companyId}
+        AND product_id = ${productId}
+        AND block_id = ${blockId}
+        AND condition = ${condition}
+        AND expiry_date IS NOT DISTINCT FROM ${expiryDate ?? null}
+    `;
+    if (result.length === 0) return null;
+    const row = result[0] as any;
+    return new InventoryBalance({
+      companyId: row.company_id,
+      productId: row.product_id,
+      productName: row.product_name,
+      productCode: row.product_code,
+      blockId: row.block_id,
+      blockAddress: row.block_address,
+      condition: row.condition,
+      expiryDate: row.expiry_date ?? undefined,
+      onHand: row.on_hand,
+      reserved: row.reserved ?? undefined,
+      available: row.available,
+      uom: row.uom,
+      lastUpdatedAt: row.last_updated_at
+    });
+  }
+
+  async findAllByFilter(filter: any): Promise<InventoryBalance[]> {
+    // Example: filter = { companyId, productId }
+    let query = 'SELECT * FROM "InventoryBalance" WHERE 1=1';
+    const params: any[] = [];
+    if (filter.companyId) {
+      query += ' AND company_id = $' + (params.length + 1);
+      params.push(filter.companyId);
+    }
+    if (filter.productId) {
+      query += ' AND product_id = $' + (params.length + 1);
+      params.push(filter.productId);
+    }
+    // Add more filters as needed
+    const result = await sql.unsafe(query, ...params);
+    return result.map((row: any) => new InventoryBalance({
+      companyId: row.company_id,
+      productId: row.product_id,
+      productName: row.product_name,
+      productCode: row.product_code,
+      blockId: row.block_id,
+      blockAddress: row.block_address,
+      condition: row.condition,
+      expiryDate: row.expiry_date ?? undefined,
+      onHand: row.on_hand,
+      reserved: row.reserved ?? undefined,
+      available: row.available,
+      uom: row.uom,
+      lastUpdatedAt: row.last_updated_at
+    }));
+  }
+}
