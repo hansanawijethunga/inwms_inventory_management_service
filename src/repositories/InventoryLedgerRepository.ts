@@ -5,29 +5,29 @@ import sql from '../infrastructure/db.js';
 export class InventoryLedgerRepository implements IInventoryLedgerRepository {
   async save(ledger: InventoryLedger): Promise<void> {
     await sql`
-      INSERT INTO "InventoryLedger" (
+      INSERT INTO inventoryledger (
         id, timestamp, type, receipt_line_id, shipment_id, shipment_number, lot_number, company_id, company_legal_name, product_id, product_name, product_code, product_area_m2, requires_expiry, requires_serial, handling_notes, block_id, block_address, block_area_m2, condition, quantity, uom, serial_numbers, inventory_date, expiry_date, product_items_snapshot, notes, reason, created_by, created_at, idempotency_key
       ) VALUES (
         ${ledger.id},
-        ${ledger.timestamp},
+        ${ledger.timestamp ?? null},
         ${ledger.type},
         ${ledger.receiptLineId ?? null},
         ${ledger.shipmentId ?? null},
         ${ledger.shipmentNumber ?? null},
         ${ledger.lotNumber ?? null},
         ${ledger.companyId},
-        ${ledger.companyLegalName},
+        ${ledger.companyLegalName ?? null},
         ${ledger.productId},
-        ${ledger.productName},
-        ${ledger.productCode},
+        ${ledger.productName ?? null},
+        ${ledger.productCode ?? null},
         ${ledger.productAreaM2 ?? null},
         ${ledger.requiresExpiry ?? null},
         ${ledger.requiresSerial ?? null},
         ${ledger.handlingNotes ?? null},
         ${ledger.blockId},
-        ${ledger.blockAddress},
+        ${ledger.blockAddress ?? null},
         ${ledger.blockAreaM2 ?? null},
-        ${ledger.condition},
+        ${ledger.condition ?? null},
         ${ledger.quantity},
         ${ledger.uom},
         ${ledger.serialNumbers ? JSON.stringify(ledger.serialNumbers) : null},
@@ -76,7 +76,7 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
 
   async findById(id: string): Promise<InventoryLedger | null> {
     const result = await sql`
-      SELECT * FROM "InventoryLedger" WHERE id = ${id}
+  SELECT * FROM inventoryledger WHERE id = ${id}
     `;
     if (result.length === 0) return null;
     const row = result[0] as any;
@@ -117,7 +117,7 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
 
   async findByReceiptLineId(receiptLineId: string): Promise<InventoryLedger[]> {
     const result = await sql`
-      SELECT * FROM "InventoryLedger" WHERE receipt_line_id = ${receiptLineId}
+  SELECT * FROM inventoryledger WHERE receipt_line_id = ${receiptLineId}
     `;
     return result.map((row: any) => new InventoryLedger({
       id: row.id,
@@ -156,7 +156,7 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
 
   async findAllByFilter(filter: any): Promise<InventoryLedger[]> {
     // Example: filter = { companyId, productId }
-    let query = 'SELECT * FROM "InventoryLedger" WHERE 1=1';
+  let query = 'SELECT * FROM inventoryledger WHERE 1=1';
     const params: any[] = [];
     if (filter.companyId) {
       query += ' AND company_id = $' + (params.length + 1);

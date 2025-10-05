@@ -2,11 +2,11 @@
   "type": "module",
   "name": "inventory-management",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "dev": "tsx watch index.ts",
+    "dev": "tsx watch src/index.ts",
     "migrate": "tsx run-migrations.ts"
   },
   "keywords": [],

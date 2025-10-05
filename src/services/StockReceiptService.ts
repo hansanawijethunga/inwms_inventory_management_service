@@ -30,10 +30,10 @@ export class StockReceiptService {
     // Transactional save
     await sql.begin(async (tx) => {
       // Save header
-      await this.repository.saveHeader(header);
+      await this.repository.saveHeader(header, tx);
       // Save all lines
       for (const line of lines) {
-        await this.repository.saveLine(line);
+        await this.repository.saveLine(line, tx);
         // Record ledger entry
         const ledger = new InventoryLedger({
           type: InventoryLedgerType.RECEIVE,
@@ -63,14 +63,15 @@ export class StockReceiptService {
           ...('notes' in header && header.notes !== undefined ? { notes: header.notes } : {}),
           ...('createdBy' in header && header.createdBy !== undefined ? { createdBy: header.createdBy } : {}),
         });
-        await this.ledgerRepository.save(ledger);
+        await this.ledgerRepository.save(ledger, tx);
         // Update inventory balance
         const prevBalance = await this.balanceRepository.findByKey(
           header.companyId,
           line.productId,
           line.blockId,
           line.condition,
-          line.expiryDate
+          line.expiryDate,
+          tx
         );
         const newOnHand = (prevBalance?.onHand || 0) + line.quantity;
         const balanceProps: any = {
@@ -89,22 +90,23 @@ export class StockReceiptService {
         if (line.expiryDate !== undefined) balanceProps.expiryDate = line.expiryDate;
         if (prevBalance?.reserved !== undefined) balanceProps.reserved = prevBalance.reserved;
         const balance = new InventoryBalance(balanceProps);
-        await this.balanceRepository.save(balance);
+        await this.balanceRepository.save(balance, tx);
         // Update block occupancy
-        const prevOccupancy = await this.occupancyRepository.findByBlockAndCompany(line.blockId, header.companyId);
+        const prevOccupancy = await this.occupancyRepository.findByBlockAndCompany(line.blockId, header.companyId, tx);
         const newOccupied = (prevOccupancy?.occupiedAreaM2 || 0) + (line.productAreaM2 || 0);
         const newRemaining = (prevOccupancy?.remainingAreaM2 || 0) - (line.productAreaM2 || 0);
         const occupancyProps: any = {
           blockId: line.blockId,
           blockAddress: line.blockAddress,
+          blockAreaM2: line.blockAreaM2,
           companyId: header.companyId,
+          productId: line.productId,
           occupiedAreaM2: newOccupied,
           remainingAreaM2: newRemaining,
           lastUpdatedAt: new Date()
         };
-        if (line.blockAreaM2 !== undefined) occupancyProps.blockAreaM2 = line.blockAreaM2;
         const occupancy = new BlockOccupancy(occupancyProps);
-        await this.occupancyRepository.save(occupancy);
+        await this.occupancyRepository.save(occupancy, tx);
       }
     });
   }

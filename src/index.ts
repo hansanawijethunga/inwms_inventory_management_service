@@ -1,17 +1,15 @@
 import { InventoryLedgerQueryController } from './controllers/InventoryLedgerQueryController.js';
 import { InventoryProductStockController } from './controllers/InventoryProductStockController.js';
 import { InventoryShipmentQueryController } from './controllers/InventoryShipmentQueryController.js';
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import { StockReceiptController } from './controllers/StockReceiptController.js';
 import { InventoryShipmentController } from './controllers/InventoryShipmentController.js';
-
 import { InventoryBalanceController } from './controllers/InventoryBalanceController.js';
-
-
 import { InventoryRemoveController } from './controllers/InventoryRemoveController.js';
 import { InventoryAdjustController } from './controllers/InventoryAdjustController.js';
+
+
 const app = express();
 app.use(bodyParser.json());
 

@@ -4,16 +4,19 @@ import sql from '../infrastructure/db.js';
 
 export class BlockOccupancyRepository implements IBlockOccupancyRepository {
   async save(occupancy: BlockOccupancy): Promise<void> {
+    console.log('BlockOccupancyRepository.save occupancy:', occupancy);
     await sql`
-      INSERT INTO "BlockOccupancy" (
-        block_id, block_address, block_area_m2, company_id, occupied_area_m2, remaining_area_m2, last_updated_at
+      INSERT INTO blockoccupancy (
+        id, block_id, block_address, block_area_m2, company_id, product_id, occupied_area_m2, remaining_area_m2, last_updated_at
       ) VALUES (
+        ${occupancy.id},
         ${occupancy.blockId},
-        ${occupancy.blockAddress},
+        ${occupancy.blockAddress ?? null},
         ${occupancy.blockAreaM2 ?? null},
         ${occupancy.companyId},
-        ${occupancy.occupiedAreaM2},
-        ${occupancy.remainingAreaM2},
+        ${occupancy.productId},
+        ${occupancy.occupiedAreaM2 ?? null},
+        ${occupancy.remainingAreaM2 ?? null},
         ${occupancy.lastUpdatedAt}
       )
       ON CONFLICT (block_id, company_id) DO UPDATE SET
@@ -27,7 +30,7 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
 
   async findByBlockAndCompany(blockId: string, companyId: string): Promise<BlockOccupancy | null> {
     const result = await sql`
-      SELECT * FROM "BlockOccupancy"
+  SELECT * FROM blockoccupancy
       WHERE block_id = ${blockId} AND company_id = ${companyId}
     `;
     if (result.length === 0) return null;
@@ -37,6 +40,7 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
       blockAddress: row.block_address,
       blockAreaM2: row.block_area_m2 ?? undefined,
       companyId: row.company_id,
+      productId: row.product_id,
       occupiedAreaM2: row.occupied_area_m2,
       remainingAreaM2: row.remaining_area_m2,
       lastUpdatedAt: row.last_updated_at
@@ -45,13 +49,14 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
 
   async findAllByCompany(companyId: string): Promise<BlockOccupancy[]> {
     const result = await sql`
-      SELECT * FROM "BlockOccupancy" WHERE company_id = ${companyId}
+  SELECT * FROM blockoccupancy WHERE company_id = ${companyId}
     `;
-    return result.map((row: any) => new BlockOccupancy({
+  return result.map((row: any) => new BlockOccupancy({
       blockId: row.block_id,
       blockAddress: row.block_address,
       blockAreaM2: row.block_area_m2 ?? undefined,
       companyId: row.company_id,
+      productId: row.product_id,
       occupiedAreaM2: row.occupied_area_m2,
       remainingAreaM2: row.remaining_area_m2,
       lastUpdatedAt: row.last_updated_at

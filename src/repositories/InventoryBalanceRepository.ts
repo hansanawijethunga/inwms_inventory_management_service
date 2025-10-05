@@ -5,21 +5,22 @@ import sql from '../infrastructure/db.js';
 export class InventoryBalanceRepository implements IInventoryBalanceRepository {
   async save(balance: InventoryBalance): Promise<void> {
     await sql`
-      INSERT INTO "InventoryBalance" (
-        company_id, product_id, product_name, product_code, block_id, block_address, condition, expiry_date, on_hand, reserved, available, uom, last_updated_at
+      INSERT INTO inventorybalance (
+        id, company_id, product_id, product_name, product_code, block_id, block_address, condition, expiry_date, on_hand, reserved, available, uom, last_updated_at
       ) VALUES (
+        ${balance.id},
         ${balance.companyId},
         ${balance.productId},
-        ${balance.productName},
-        ${balance.productCode},
+        ${balance.productName ?? null},
+        ${balance.productCode ?? null},
         ${balance.blockId},
-        ${balance.blockAddress},
-        ${balance.condition},
+        ${balance.blockAddress ?? null},
+        ${balance.condition ?? null},
         ${balance.expiryDate ?? null},
         ${balance.onHand},
         ${balance.reserved ?? null},
         ${balance.available},
-        ${balance.uom},
+        ${balance.uom ?? null},
         ${balance.lastUpdatedAt}
       )
       ON CONFLICT (company_id, product_id, block_id, condition, expiry_date) DO UPDATE SET
@@ -42,7 +43,7 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
     expiryDate?: Date
   ): Promise<InventoryBalance | null> {
     const result = await sql`
-      SELECT * FROM "InventoryBalance"
+  SELECT * FROM inventorybalance
       WHERE company_id = ${companyId}
         AND product_id = ${productId}
         AND block_id = ${blockId}
@@ -70,7 +71,7 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
 
   async findAllByFilter(filter: any): Promise<InventoryBalance[]> {
     // Example: filter = { companyId, productId }
-    let query = 'SELECT * FROM "InventoryBalance" WHERE 1=1';
+  let query = 'SELECT * FROM inventorybalance WHERE 1=1';
     const params: any[] = [];
     if (filter.companyId) {
       query += ' AND company_id = $' + (params.length + 1);

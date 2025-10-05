@@ -1,13 +1,14 @@
 import { InventoryBalance } from '../InventoryBalance.js';
 
 export interface IInventoryBalanceRepository {
-  save(balance: InventoryBalance): Promise<void>;
+  save(balance: InventoryBalance, sqlOrTx?: any): Promise<void>;
   findByKey(
     companyId: string,
     productId: string,
     blockId: string,
     condition: string,
-    expiryDate?: Date
+    expiryDate?: Date,
+    sqlOrTx?: any
   ): Promise<InventoryBalance | null>;
-  findAllByFilter(filter: any): Promise<InventoryBalance[]>;
+  findAllByFilter(filter: any, sqlOrTx?: any): Promise<InventoryBalance[]>;
 }

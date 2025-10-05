@@ -1,4 +1,7 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export interface IInventoryBalanceProps {
+  id?: string;
   companyId: string;
   productId: string;
   productName: string;
@@ -15,6 +18,7 @@ export interface IInventoryBalanceProps {
 }
 
 export class InventoryBalance {
+  public readonly id: string;
   public readonly companyId: string;
   public readonly productId: string;
   public readonly productName: string;
@@ -30,6 +34,7 @@ export class InventoryBalance {
   public readonly lastUpdatedAt: Date;
 
   constructor(props: IInventoryBalanceProps) {
+    this.id = props.id || uuidv4();
     this.companyId = props.companyId;
     this.productId = props.productId;
     this.productName = props.productName;

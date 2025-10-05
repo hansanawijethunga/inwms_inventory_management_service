@@ -13,12 +13,27 @@ if (!connectionString) {
 
 const sql = postgres(connectionString);
 
+async function dropAllTables() {
+  // Drop all tables in the current schema
+  await sql.unsafe(`
+    DO $$ DECLARE
+        r RECORD;
+    BEGIN
+        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()) LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+        END LOOP;
+    END $$;
+  `);
+}
+
 async function runMigrations() {
   const migrationsDir = path.resolve(
     decodeURIComponent(path.dirname(new URL(import.meta.url).pathname.replace(/^\/+([A-Za-z]:)/, '$1'))),
     'migrations'
   );
   const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql'));
+  // Always drop all tables before running migrations
+  await dropAllTables();
   for (const file of files) {
     const filePath = path.join(migrationsDir, file);
     const migration = fs.readFileSync(filePath, 'utf8');
