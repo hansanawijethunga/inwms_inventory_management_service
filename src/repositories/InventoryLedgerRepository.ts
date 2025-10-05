@@ -1,10 +1,9 @@
 import { InventoryLedger } from '../domain/InventoryLedger.js';
 import type { IInventoryLedgerRepository } from '../domain/interfaces/IInventoryLedgerRepository.js';
 import sql from '../infrastructure/db.js';
-
 export class InventoryLedgerRepository implements IInventoryLedgerRepository {
-  async save(ledger: InventoryLedger): Promise<void> {
-    await sql`
+  async save(ledger: InventoryLedger, sqlOrTx: any = sql): Promise<void> {
+    await sqlOrTx`
       INSERT INTO inventoryledger (
         id, timestamp, type, receipt_line_id, shipment_id, shipment_number, lot_number, company_id, company_legal_name, product_id, product_name, product_code, product_area_m2, requires_expiry, requires_serial, handling_notes, block_id, block_address, block_area_m2, condition, quantity, uom, serial_numbers, inventory_date, expiry_date, product_items_snapshot, notes, reason, created_by, created_at, idempotency_key
       ) VALUES (
@@ -74,8 +73,8 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
     `;
   }
 
-  async findById(id: string): Promise<InventoryLedger | null> {
-    const result = await sql`
+  async findById(id: string, sqlOrTx: any = sql): Promise<InventoryLedger | null> {
+  const result = await sqlOrTx`
   SELECT * FROM inventoryledger WHERE id = ${id}
     `;
     if (result.length === 0) return null;
@@ -115,8 +114,8 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
     });
   }
 
-  async findByReceiptLineId(receiptLineId: string): Promise<InventoryLedger[]> {
-    const result = await sql`
+  async findByReceiptLineId(receiptLineId: string, sqlOrTx: any = sql): Promise<InventoryLedger[]> {
+  const result = await sqlOrTx`
   SELECT * FROM inventoryledger WHERE receipt_line_id = ${receiptLineId}
     `;
     return result.map((row: any) => new InventoryLedger({
@@ -154,7 +153,7 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
     }));
   }
 
-  async findAllByFilter(filter: any): Promise<InventoryLedger[]> {
+  async findAllByFilter(filter: any, sqlOrTx: any = sql): Promise<InventoryLedger[]> {
     // Example: filter = { companyId, productId }
   let query = 'SELECT * FROM inventoryledger WHERE 1=1';
     const params: any[] = [];
@@ -167,7 +166,7 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
       params.push(filter.productId);
     }
     // Add more filters as needed
-    const result = await sql.unsafe(query, ...params);
+  const result = await sqlOrTx.unsafe(query, ...params);
     return result.map((row: any) => new InventoryLedger({
       id: row.id,
       timestamp: row.timestamp,

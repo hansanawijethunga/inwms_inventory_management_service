@@ -1,11 +1,10 @@
 import { BlockOccupancy } from '../domain/BlockOccupancy.js';
 import type { IBlockOccupancyRepository } from '../domain/interfaces/IBlockOccupancyRepository.js';
 import sql from '../infrastructure/db.js';
-
 export class BlockOccupancyRepository implements IBlockOccupancyRepository {
-  async save(occupancy: BlockOccupancy): Promise<void> {
+  async save(occupancy: BlockOccupancy, sqlOrTx: any = sql): Promise<void> {
     console.log('BlockOccupancyRepository.save occupancy:', occupancy);
-    await sql`
+    await sqlOrTx`
       INSERT INTO blockoccupancy (
         id, block_id, block_address, block_area_m2, company_id, product_id, occupied_area_m2, remaining_area_m2, last_updated_at
       ) VALUES (
@@ -28,8 +27,8 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
     `;
   }
 
-  async findByBlockAndCompany(blockId: string, companyId: string): Promise<BlockOccupancy | null> {
-    const result = await sql`
+  async findByBlockAndCompany(blockId: string, companyId: string, sqlOrTx: any = sql): Promise<BlockOccupancy | null> {
+  const result = await sqlOrTx`
   SELECT * FROM blockoccupancy
       WHERE block_id = ${blockId} AND company_id = ${companyId}
     `;
@@ -47,8 +46,8 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
     });
   }
 
-  async findAllByCompany(companyId: string): Promise<BlockOccupancy[]> {
-    const result = await sql`
+  async findAllByCompany(companyId: string, sqlOrTx: any = sql): Promise<BlockOccupancy[]> {
+  const result = await sqlOrTx`
   SELECT * FROM blockoccupancy WHERE company_id = ${companyId}
     `;
   return result.map((row: any) => new BlockOccupancy({

@@ -1,10 +1,9 @@
 import { InventoryBalance } from '../domain/InventoryBalance.js';
 import type { IInventoryBalanceRepository } from '../domain/interfaces/IInventoryBalanceRepository.js';
 import sql from '../infrastructure/db.js';
-
 export class InventoryBalanceRepository implements IInventoryBalanceRepository {
-  async save(balance: InventoryBalance): Promise<void> {
-    await sql`
+  async save(balance: InventoryBalance, sqlOrTx: any = sql): Promise<void> {
+    await sqlOrTx`
       INSERT INTO inventorybalance (
         id, company_id, product_id, product_name, product_code, block_id, block_address, condition, expiry_date, on_hand, reserved, available, uom, last_updated_at
       ) VALUES (
@@ -40,9 +39,10 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
     productId: string,
     blockId: string,
     condition: string,
-    expiryDate?: Date
+    expiryDate?: Date,
+    sqlOrTx: any = sql
   ): Promise<InventoryBalance | null> {
-    const result = await sql`
+  const result = await sqlOrTx`
   SELECT * FROM inventorybalance
       WHERE company_id = ${companyId}
         AND product_id = ${productId}
@@ -69,7 +69,7 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
     });
   }
 
-  async findAllByFilter(filter: any): Promise<InventoryBalance[]> {
+  async findAllByFilter(filter: any, sqlOrTx: any = sql): Promise<InventoryBalance[]> {
     // Example: filter = { companyId, productId }
   let query = 'SELECT * FROM inventorybalance WHERE 1=1';
     const params: any[] = [];
@@ -82,7 +82,7 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
       params.push(filter.productId);
     }
     // Add more filters as needed
-    const result = await sql.unsafe(query, ...params);
+  const result = await sqlOrTx.unsafe(query, ...params);
     return result.map((row: any) => new InventoryBalance({
       companyId: row.company_id,
       productId: row.product_id,
