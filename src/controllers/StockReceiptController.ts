@@ -17,10 +17,10 @@ const stockReceiptService = new StockReceiptService(
 export class StockReceiptController {
   static async createReceipt(req: Request, res: Response) {
     try {
-      const { header, lines } = req.body;
-      const headerObj = new StockReceiptHeader(header);
-      const lineObjs = lines.map((l: any) => new StockReceiptLine(l));
-      await stockReceiptService.createReceipt(headerObj, lineObjs);
+  const { header, lines } = req.body;
+  const headerObj = new StockReceiptHeader(header);
+  const lineObjs = lines.map((l: any) => new StockReceiptLine({ ...l, receiptId: headerObj.id }));
+  await stockReceiptService.createReceipt(headerObj, lineObjs);
       res.status(201).json({ message: 'Stock receipt created' });
     } catch (err: any) {
       res.status(400).json({ error: err.message });

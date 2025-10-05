@@ -3,7 +3,7 @@ import type { IBlockOccupancyRepository } from '../domain/interfaces/IBlockOccup
 import sql from '../infrastructure/db.js';
 export class BlockOccupancyRepository implements IBlockOccupancyRepository {
   async save(occupancy: BlockOccupancy, sqlOrTx: any = sql): Promise<void> {
-    console.log('BlockOccupancyRepository.save occupancy:', occupancy);
+    // console.log('BlockOccupancyRepository.save occupancy:', occupancy);
     await sqlOrTx`
       INSERT INTO blockoccupancy (
         id, block_id, block_address, block_area_m2, company_id, product_id, occupied_area_m2, remaining_area_m2, last_updated_at

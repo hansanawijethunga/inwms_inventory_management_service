@@ -14,13 +14,12 @@ const app = express();
 app.use(bodyParser.json());
 
 
-app.post('/inventory/shipments/receive', InventoryShipmentController.receiveBulk);
+app.post('/inventory/receive', InventoryShipmentController.receiveBulk);
 app.post('/inventory/remove', InventoryRemoveController.bulkRemove);
 app.post('/inventory/adjust', InventoryAdjustController.bulkAdjust);
 
 // --- GET Endpoints ---
 app.get('/api/receipts/:id', StockReceiptController.getReceiptById);
-app.get('/api/balance', InventoryBalanceController.getBalanceByKey);
 app.get('/inventory/balances', InventoryBalanceController.list);
 app.get('/inventory/products/:productId/stock', InventoryProductStockController.getByProductId);
 app.get('/inventory/ledger', InventoryLedgerQueryController.list);

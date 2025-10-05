@@ -25,7 +25,7 @@ export class InventoryShipmentController {
       }
       for (const shipment of shipments) {
         const headerObj = new StockReceiptHeader(shipment.header);
-        const lineObjs = shipment.lines.map((l: any) => new StockReceiptLine(l));
+        const lineObjs = shipment.lines.map((l: any) => new StockReceiptLine({ ...l, receiptId: headerObj.id }));
         await stockReceiptService.createReceipt(headerObj, lineObjs);
       }
       res.status(201).json({ message: 'Bulk stock receipts processed' });

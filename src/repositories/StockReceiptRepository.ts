@@ -106,8 +106,8 @@ export class StockReceiptRepository implements IStockReceiptRepository {
       line.productItemsSnapshot ? JSON.stringify(line.productItemsSnapshot) : null,
       line.createdAt
     ];
-    console.log('saveLine SQL:', query);
-    console.log('saveLine values:', values);
+    // console.log('saveLine SQL:', query);
+    // console.log('saveLine values:', values);
   await sqlOrTx`
       INSERT INTO stockreceiptline (
         id, receipt_id, product_id, product_name, product_code, product_area_m2, requires_expiry, requires_serial, handling_notes, quantity, uom, serial_numbers, block_id, block_address, block_area_m2, condition, expiry_date, product_items_snapshot, created_at
