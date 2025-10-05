@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 
 app.post('/inventory/receive', InventoryShipmentController.receiveBulk);
 app.post('/inventory/remove', InventoryRemoveController.bulkRemove);
-app.post('/inventory/adjust', InventoryAdjustController.bulkAdjust);
+app.post('/inventory/adjust', InventoryAdjustController.adjustLine);
 
 // --- GET Endpoints ---
 app.get('/api/receipts/:id', StockReceiptController.getReceiptById);

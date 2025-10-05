@@ -1,9 +1,45 @@
+
 import { StockReceiptHeader } from '../domain/StockReceiptHeader.js';
 import { StockReceiptLine } from '../domain/StockReceiptLine.js';
 import type { IStockReceiptRepository } from '../domain/interfaces/IStockReceiptRepository.js';
 import sql from '../infrastructure/db.js';
 
 export class StockReceiptRepository implements IStockReceiptRepository {
+
+  async findLineById(lineId: string, sqlOrTx = sql): Promise<StockReceiptLine | null> {
+    const result = await sqlOrTx`
+      SELECT * FROM stockreceiptline WHERE id = ${lineId}
+    `;
+    if (result.length === 0) return null;
+    const row = result[0] as any;
+    return new StockReceiptLine({
+      id: row.id,
+      receiptId: row.receipt_id,
+      productId: row.product_id,
+      productName: row.product_name,
+      productCode: row.product_code,
+      productAreaM2: row.product_area_m2,
+      requiresExpiry: row.requires_expiry,
+      requiresSerial: row.requires_serial,
+      handlingNotes: row.handling_notes,
+      quantity: row.quantity,
+      uom: row.uom,
+      serialNumbers: row.serial_numbers ? JSON.parse(row.serial_numbers) : undefined,
+      blockId: row.block_id,
+      blockAddress: row.block_address,
+      blockAreaM2: row.block_area_m2,
+      condition: row.condition,
+      expiryDate: row.expiry_date,
+      productItemsSnapshot: row.product_items_snapshot ? JSON.parse(row.product_items_snapshot) : undefined,
+      createdAt: row.created_at
+    });
+  }
+
+  async updateLineQuantity(lineId: string, newQuantity: number, sqlOrTx = sql): Promise<void> {
+    await sqlOrTx`
+      UPDATE stockreceiptline SET quantity = ${newQuantity} WHERE id = ${lineId}
+    `;
+  }
   async saveHeader(header: StockReceiptHeader, sqlOrTx = sql): Promise<void> {
     const query = `INSERT INTO stockreceiptheader (
       id, shipment_id, shipment_number, lot_number, inventory_date, company_id, company_legal_name, notes, created_by, created_at
