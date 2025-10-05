@@ -22,11 +22,82 @@ export class StockReceiptService {
     if (!header || !lines || lines.length === 0) {
       throw new Error('Header and at least one line are required');
     }
+
+    // Lot number consistency
+    if (lines.some(line => ('lotNumber' in line) && (line as any).lotNumber !== header.lotNumber)) {
+      throw new Error('All lines must have the same lotNumber as the header');
+    }
+
+    // Idempotency: check for duplicate shipmentId or lotNumber (if implemented)
+    // Uncomment if you want to enforce this:
+    // const existingShipment = await this.repository.findByShipmentId(header.shipmentId);
+    // if (existingShipment) throw new Error('Duplicate shipmentId');
+
+    // Validate each line
+    for (const [i, line] of lines.entries()) {
+      // Required fields (explicit access)
+      if (!line.productId) throw new Error(`Line ${i + 1}: Field 'productId' is required`);
+      if (!line.productName) throw new Error(`Line ${i + 1}: Field 'productName' is required`);
+      if (!line.productCode) throw new Error(`Line ${i + 1}: Field 'productCode' is required`);
+  if (line.quantity === undefined || line.quantity === null) throw new Error(`Line ${i + 1}: Field 'quantity' is required`);
+      if (!line.uom) throw new Error(`Line ${i + 1}: Field 'uom' is required`);
+      if (!line.blockId) throw new Error(`Line ${i + 1}: Field 'blockId' is required`);
+      if (!line.blockAddress) throw new Error(`Line ${i + 1}: Field 'blockAddress' is required`);
+      if (!line.condition) throw new Error(`Line ${i + 1}: Field 'condition' is required`);
+      if (!line.createdAt) throw new Error(`Line ${i + 1}: Field 'createdAt' is required`);
+      if (!header.companyId) throw new Error('companyId is required');
+
+      // Type checks
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(line.productId)) throw new Error(`Line ${i + 1}: productId must be a valid UUID`);
+      if (!uuidRegex.test(line.blockId)) throw new Error(`Line ${i + 1}: blockId must be a valid UUID`);
+      if (typeof line.quantity !== 'number' || line.quantity <= 0) throw new Error(`Line ${i + 1}: quantity must be a positive number`);
+      const allowedConditions = ['Good', 'Damaged', 'Expired'];
+      if (!allowedConditions.includes(line.condition)) throw new Error(`Line ${i + 1}: condition must be one of: ${allowedConditions.join(', ')}`);
+
+      // Serial number validation
+      if (line.requiresSerial) {
+        if (!Array.isArray(line.serialNumbers) || line.serialNumbers.length !== line.quantity) {
+          throw new Error(`Line ${i + 1}: serialNumbers must be an array with length equal to quantity when requiresSerial is true`);
+        }
+      }
+
+      // Expiry validation
+      if (line.requiresExpiry) {
+        if (!line.expiryDate || (typeof line.expiryDate === 'string' && isNaN(Date.parse(line.expiryDate))) || (line.expiryDate instanceof Date && isNaN(line.expiryDate.getTime()))) {
+          throw new Error(`Line ${i + 1}: expiryDate must be present and a valid date when requiresExpiry is true`);
+        }
+      }
+
+      // Product items snapshot
+      if (line.productItemsSnapshot && !Array.isArray(line.productItemsSnapshot)) {
+        throw new Error(`Line ${i + 1}: productItemsSnapshot must be an array if present`);
+      }
+    }
+
+    // Block capacity validation (async, needs DB)
+    for (const [i, line] of lines.entries()) {
+      const neededArea = (line.productAreaM2 || 0) * (line.quantity || 0);
+      const block = await this.occupancyRepository.findByBlockAndCompany(line.blockId, header.companyId);
+      let remaining: number;
+      if (block) {
+        remaining = block.remainingAreaM2 ?? 0;
+      } else {
+        // Use blockAreaM2 from the line as the available area if no occupancy record exists
+        remaining = line.blockAreaM2 || 0;
+      }
+      console.log(remaining);
+      if (neededArea > remaining) {
+        throw new Error(`Line ${i + 1}: Block does not have enough remaining area. Needed: ${neededArea}, Available: ${remaining}`);
+      }
+    }
+
     // Check for duplicate
     const existing = await this.repository.findHeaderById(header.id);
     if (existing) {
       throw new Error('Receipt with this ID already exists');
     }
+
     // Transactional save
     await sql.begin(async (tx) => {
       // Save header
@@ -73,7 +144,11 @@ export class StockReceiptService {
           line.expiryDate,
           tx
         );
-        const newOnHand = (prevBalance?.onHand || 0) + line.quantity;
+        const prevOnHand = Number(prevBalance?.onHand || 0);
+        const prevReserved = Number(prevBalance?.reserved || 0);
+        const qty = Number(line.quantity || 0);
+        const newOnHand = prevOnHand + qty;
+        const newAvailable = newOnHand - prevReserved;
         const balanceProps: any = {
           companyId: header.companyId,
           productId: line.productId,
@@ -83,18 +158,26 @@ export class StockReceiptService {
           blockAddress: line.blockAddress,
           condition: line.condition,
           onHand: newOnHand,
-          available: newOnHand - (prevBalance?.reserved || 0),
+          available: newAvailable,
           uom: line.uom,
           lastUpdatedAt: new Date()
         };
         if (line.expiryDate !== undefined) balanceProps.expiryDate = line.expiryDate;
-        if (prevBalance?.reserved !== undefined) balanceProps.reserved = prevBalance.reserved;
+        if (prevBalance?.reserved !== undefined) balanceProps.reserved = prevReserved;
         const balance = new InventoryBalance(balanceProps);
         await this.balanceRepository.save(balance, tx);
         // Update block occupancy
         const prevOccupancy = await this.occupancyRepository.findByBlockAndCompany(line.blockId, header.companyId, tx);
-        const newOccupied = (prevOccupancy?.occupiedAreaM2 || 0) + (line.productAreaM2 || 0);
-        const newRemaining = (prevOccupancy?.remainingAreaM2 || 0) - (line.productAreaM2 || 0);
+        const lineTotalArea = Number(line.productAreaM2 || 0) * Number(line.quantity || 0);
+        let newOccupied: number;
+        let newRemaining: number;
+        if (prevOccupancy) {
+          newOccupied = Number(prevOccupancy.occupiedAreaM2 || 0) + lineTotalArea;
+          newRemaining = Number(prevOccupancy.remainingAreaM2 || 0) - lineTotalArea;
+        } else {
+          newOccupied = lineTotalArea;
+          newRemaining = Number(line.blockAreaM2 || 0) - lineTotalArea;
+        }
         const occupancyProps: any = {
           blockId: line.blockId,
           blockAddress: line.blockAddress,

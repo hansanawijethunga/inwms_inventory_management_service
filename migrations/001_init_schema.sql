@@ -65,7 +65,7 @@ CREATE TABLE InventoryBalance (
 );
 
 ALTER TABLE InventoryBalance
-ADD CONSTRAINT inventorybalance_unique_key UNIQUE (company_id, product_id, block_id, condition, expiry_date);
+ADD CONSTRAINT inventorybalance_unique_key UNIQUE (company_id, product_id, block_id, condition);
 
 -- Create InventoryLedger table
 CREATE TABLE InventoryLedger (

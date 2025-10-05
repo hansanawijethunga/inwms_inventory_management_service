@@ -16,13 +16,13 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
         ${balance.blockAddress ?? null},
         ${balance.condition ?? null},
         ${balance.expiryDate ?? null},
-        ${balance.onHand},
-        ${balance.reserved ?? null},
-        ${balance.available},
+        ${Number(balance.onHand)},
+        ${balance.reserved !== undefined && balance.reserved !== null ? Number(balance.reserved) : null},
+        ${Number(balance.available)},
         ${balance.uom ?? null},
         ${balance.lastUpdatedAt}
       )
-      ON CONFLICT (company_id, product_id, block_id, condition, expiry_date) DO UPDATE SET
+      ON CONFLICT (company_id, product_id, block_id, condition) DO UPDATE SET
         product_name = EXCLUDED.product_name,
         product_code = EXCLUDED.product_code,
         block_address = EXCLUDED.block_address,
