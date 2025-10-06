@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: Inventory Management Service API
+  version: 1.0.0
+  description: API documentation for the Inventory Management microservice
+servers:
+  - url: http://localhost:3000
+paths:
+  /inventory/receive:
+    post:
+      summary: Receive inventory shipment
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              # Define your expected payload here
+      responses:
+        '200':
+          description: Shipment received
+  /inventory/remove:
+    post:
+      summary: Remove inventory
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Inventory removed
+  /inventory/adjust:
+    post:
+      summary: Adjust inventory
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Inventory adjusted
+  /inventory/balances:
+    get:
+      summary: List inventory balances
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: companyId
+          schema:
+            type: string
+        - in: query
+          name: productId
+          schema:
+            type: string
+        - in: query
+          name: blockId
+          schema:
+            type: string
+        - in: query
+          name: condition
+          schema:
+            type: string
+        - in: query
+          name: expiryDate
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of balances
+  /inventory/ledger:
+    get:
+      summary: List inventory ledger entries
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: companyId
+          schema:
+            type: string
+        - in: query
+          name: productId
+          schema:
+            type: string
+        - in: query
+          name: blockId
+          schema:
+            type: string
+        - in: query
+          name: condition
+          schema:
+            type: string
+        - in: query
+          name: expiryDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: dateTo
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of ledger entries
+  /inventory/receipts/{id}:
+    get:
+      summary: Get stock receipt by ID
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stock receipt details
+  /inventory/companies/{companyId}/products/{productId}/stock:
+    get:
+      summary: Get product stock by company and product
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: companyId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product stock details
+  /inventory/companies/{companyId}/shipments/{shipment_id}:
+    get:
+      summary: Get shipment by company and shipment ID
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: companyId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: shipment_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Shipment details
+  /inventory/blocks/space:
+    get:
+      summary: Get available block space
+      tags: [Inventory]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: companyId
+          schema:
+            type: string
+        - in: query
+          name: expand
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Block space details
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

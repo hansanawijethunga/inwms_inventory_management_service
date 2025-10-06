@@ -24,14 +24,14 @@ const client = jwksClient({
 function getKey(header: JwtHeader, callback: SigningKeyCallback) {
   // If kid is missing, default to 'default' (matches your JWKS)
   const kid = header.kid || 'default';
-  console.log('JWT header:', header);
+//   console.log('JWT header:', header);
   client.getSigningKey(kid, function (err: any, key: any) {
     if (err) {
       console.error('Error getting signing key:', err);
       return callback(err);
     }
     const signingKey = key?.getPublicKey();
-    console.log('Using signing key for kid:', kid);
+    // console.log('Using signing key for kid:', kid);
     callback(null, signingKey);
   });
 }
