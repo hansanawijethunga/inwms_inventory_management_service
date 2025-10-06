@@ -6,12 +6,12 @@ const receiptRepo = new StockReceiptRepository();
 export class InventoryShipmentQueryController {
   static async getByShipmentId(req: Request, res: Response) {
     try {
-      const { shipment_id } = req.params;
-      if (!shipment_id) {
-        res.status(400).json({ error: 'shipment_id is required' });
+      const { companyId, shipment_id } = req.params;
+      if (!companyId || !shipment_id) {
+        res.status(400).json({ error: 'companyId and shipment_id are required' });
         return;
       }
-      const receipts = await receiptRepo.findByShipmentId(shipment_id);
+      const receipts = await receiptRepo.findByShipmentIdAndCompany(shipment_id, companyId);
       res.json(receipts);
     } catch (err: any) {
       res.status(400).json({ error: err.message });

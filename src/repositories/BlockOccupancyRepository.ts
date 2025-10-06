@@ -61,4 +61,21 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
       lastUpdatedAt: row.last_updated_at
     }));
   }
+
+  async getAvailableSpace(filter: { companyId?: string }, sqlOrTx: any = sql) {
+    let query = `
+      SELECT company_id, block_id, block_address,
+        SUM(block_area_m2) AS total_area,
+        SUM(occupied_area_m2) AS occupied_area,
+        (SUM(block_area_m2) - SUM(occupied_area_m2)) AS available_area
+      FROM blockoccupancy
+    `;
+    const params: any[] = [];
+    if (filter.companyId) {
+      query += ` WHERE company_id = $1`;
+      params.push(filter.companyId);
+    }
+  query += ` GROUP BY company_id, block_id, block_address`;
+    return sqlOrTx.unsafe(query, params);
+  }
 }

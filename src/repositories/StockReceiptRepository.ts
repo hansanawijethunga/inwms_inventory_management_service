@@ -237,9 +237,9 @@ export class StockReceiptRepository implements IStockReceiptRepository {
     }));
   }
 
-  async findByShipmentId(shipmentId: string, sqlOrTx = sql): Promise<StockReceiptHeader[]> {
-  const result = await sqlOrTx`
-  SELECT * FROM stockreceiptheader WHERE shipment_id = ${shipmentId}
+  async findByShipmentIdAndCompany(shipmentId: string, companyId: string, sqlOrTx = sql): Promise<StockReceiptHeader[]> {
+    const result = await sqlOrTx`
+      SELECT * FROM stockreceiptheader WHERE shipment_id = ${shipmentId} AND company_id = ${companyId}
     `;
     return result.map((row: any) => new StockReceiptHeader({
       id: row.id,

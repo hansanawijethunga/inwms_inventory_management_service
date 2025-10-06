@@ -35,6 +35,7 @@ export class InventoryBalanceService {
   }
 
   async listBalances(filter: any): Promise<InventoryBalance[]> {
+    // console.log('Listing balances with filter:', filter);
     return this.repository.findAllByFilter(filter);
   }
 }

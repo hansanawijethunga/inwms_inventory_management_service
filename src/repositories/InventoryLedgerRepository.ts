@@ -159,14 +159,39 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
     const params: any[] = [];
     if (filter.companyId) {
       query += ' AND company_id = $' + (params.length + 1);
-      params.push(filter.companyId);
+      params.push(Array.isArray(filter.companyId) ? filter.companyId[0] : filter.companyId);
     }
     if (filter.productId) {
       query += ' AND product_id = $' + (params.length + 1);
-      params.push(filter.productId);
+      params.push(Array.isArray(filter.productId) ? filter.productId[0] : filter.productId);
     }
-    // Add more filters as needed
-  const result = await sqlOrTx.unsafe(query, ...params);
+    if (filter.receiptLineId) {
+      query += ' AND receipt_line_id = $' + (params.length + 1);
+      params.push(Array.isArray(filter.receiptLineId) ? filter.receiptLineId[0] : filter.receiptLineId);
+    }
+    if (filter.blockId) {
+      query += ' AND block_id = $' + (params.length + 1);
+      params.push(Array.isArray(filter.blockId) ? filter.blockId[0] : filter.blockId);
+    }
+    // Filter by type (validate allowed types)
+    if (filter.type) {
+      const allowedTypes = ['RECEIPT', 'SHIPMENT', 'ADJUSTMENT', 'REMOVAL', 'TRANSFER'];
+      const typeValue = Array.isArray(filter.type) ? filter.type[0] : filter.type;
+      if (allowedTypes.includes(typeValue)) {
+        query += ' AND type = $' + (params.length + 1);
+        params.push(typeValue);
+      }
+    }
+    // Filter by created_at date range
+    if (filter.dateFrom) {
+      query += ' AND created_at >= $' + (params.length + 1);
+      params.push(Array.isArray(filter.dateFrom) ? filter.dateFrom[0] : filter.dateFrom);
+    }
+    if (filter.dateTo) {
+      query += ' AND created_at <= $' + (params.length + 1);
+      params.push(Array.isArray(filter.dateTo) ? filter.dateTo[0] : filter.dateTo);
+    }
+    const result = await sqlOrTx.unsafe(query, params);
     return result.map((row: any) => new InventoryLedger({
       id: row.id,
       timestamp: row.timestamp,

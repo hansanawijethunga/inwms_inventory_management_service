@@ -8,6 +8,7 @@ import { InventoryShipmentController } from './controllers/InventoryShipmentCont
 import { InventoryBalanceController } from './controllers/InventoryBalanceController.js';
 import { InventoryRemoveController } from './controllers/InventoryRemoveController.js';
 import { InventoryAdjustController } from './controllers/InventoryAdjustController.js';
+import { BlockSpaceController } from './controllers/BlockSpaceController.js';
 
 
 const app = express();
@@ -19,11 +20,12 @@ app.post('/inventory/remove', InventoryRemoveController.bulkRemove);
 app.post('/inventory/adjust', InventoryAdjustController.adjustLine);
 
 // --- GET Endpoints ---
-app.get('/api/receipts/:id', StockReceiptController.getReceiptById);
 app.get('/inventory/balances', InventoryBalanceController.list);
-app.get('/inventory/products/:productId/stock', InventoryProductStockController.getByProductId);
 app.get('/inventory/ledger', InventoryLedgerQueryController.list);
-app.get('/inventory/shipments/:shipment_id', InventoryShipmentQueryController.getByShipmentId);
+app.get('/inventory/receipts/:id', StockReceiptController.getReceiptById);
+app.get('/inventory/companies/:companyId/products/:productId/stock', InventoryProductStockController.getByProductId);
+app.get('/inventory/companies/:companyId/shipments/:shipment_id', InventoryShipmentQueryController.getByShipmentId);
+app.get('/inventory/blocks/space', BlockSpaceController.getAvailableSpace);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

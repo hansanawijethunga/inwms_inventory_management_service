@@ -70,19 +70,28 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
   }
 
   async findAllByFilter(filter: any, sqlOrTx: any = sql): Promise<InventoryBalance[]> {
-    // Example: filter = { companyId, productId }
-  let query = 'SELECT * FROM inventorybalance WHERE 1=1';
+    
+    // Defensive: ensure filter is an object
+    if (typeof filter !== 'object' || filter === null) {
+      filter = {};
+    }
+    // console.log('Filter received in findAllByFilter:', filter);
+    let query = 'SELECT * FROM inventorybalance WHERE 1=1';
     const params: any[] = [];
     if (filter.companyId) {
       query += ' AND company_id = $' + (params.length + 1);
-      params.push(filter.companyId);
+      params.push(Array.isArray(filter.companyId) ? filter.companyId[0] : filter.companyId);
     }
     if (filter.productId) {
       query += ' AND product_id = $' + (params.length + 1);
-      params.push(filter.productId);
+      params.push(Array.isArray(filter.productId) ? filter.productId[0] : filter.productId);
     }
-    // Add more filters as needed
-  const result = await sqlOrTx.unsafe(query, ...params);
+    if (filter.blockId) {
+      query += ' AND block_id = $' + (params.length + 1);
+      params.push(Array.isArray(filter.blockId) ? filter.blockId[0] : filter.blockId);
+    }
+      const result = await sqlOrTx.unsafe(query, params);
+    console.log('Result from findAllByFilter:', result);
     return result.map((row: any) => new InventoryBalance({
       companyId: row.company_id,
       productId: row.product_id,
