@@ -2,6 +2,8 @@ import { InventoryLedgerQueryController } from './controllers/InventoryLedgerQue
 import { InventoryProductStockController } from './controllers/InventoryProductStockController.js';
 import { InventoryShipmentQueryController } from './controllers/InventoryShipmentQueryController.js';
 import express from 'express';
+import { jwtAuth } from './middleware/jwtAuth.js';
+import { roleAuth } from './middleware/roleAuth.js';
 import bodyParser from 'body-parser';
 import { StockReceiptController } from './controllers/StockReceiptController.js';
 import { InventoryShipmentController } from './controllers/InventoryShipmentController.js';
@@ -11,13 +13,15 @@ import { InventoryAdjustController } from './controllers/InventoryAdjustControll
 import { BlockSpaceController } from './controllers/BlockSpaceController.js';
 
 
+
 const app = express();
 app.use(bodyParser.json());
+app.use(jwtAuth()); // Apply authentication to all APIs
 
 
-app.post('/inventory/receive', InventoryShipmentController.receiveBulk);
-app.post('/inventory/remove', InventoryRemoveController.bulkRemove);
-app.post('/inventory/adjust', InventoryAdjustController.adjustLine);
+app.post('/inventory/receive', roleAuth(['SUPER_ADMIN', 'INVENTORY_MANAGER']), InventoryShipmentController.receiveBulk);
+app.post('/inventory/remove', roleAuth(['SUPER_ADMIN', 'INVENTORY_MANAGER']), InventoryRemoveController.bulkRemove);
+app.post('/inventory/adjust', roleAuth(['SUPER_ADMIN', 'INVENTORY_MANAGER']), InventoryAdjustController.adjustLine);
 
 // --- GET Endpoints ---
 app.get('/inventory/balances', InventoryBalanceController.list);
