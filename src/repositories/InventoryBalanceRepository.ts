@@ -91,7 +91,7 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
       params.push(Array.isArray(filter.blockId) ? filter.blockId[0] : filter.blockId);
     }
       const result = await sqlOrTx.unsafe(query, params);
-    console.log('Result from findAllByFilter:', result);
+    // console.log('Result from findAllByFilter:', result);
     return result.map((row: any) => new InventoryBalance({
       companyId: row.company_id,
       productId: row.product_id,

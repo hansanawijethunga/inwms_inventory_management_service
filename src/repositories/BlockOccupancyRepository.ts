@@ -3,17 +3,15 @@ import type { IBlockOccupancyRepository } from '../domain/interfaces/IBlockOccup
 import sql from '../infrastructure/db.js';
 export class BlockOccupancyRepository implements IBlockOccupancyRepository {
   async save(occupancy: BlockOccupancy, sqlOrTx: any = sql): Promise<void> {
-    // console.log('BlockOccupancyRepository.save occupancy:', occupancy);
     await sqlOrTx`
       INSERT INTO blockoccupancy (
-        id, block_id, block_address, block_area_m2, company_id, product_id, occupied_area_m2, remaining_area_m2, last_updated_at
+        id, block_id, block_address, block_area_m2, company_id, occupied_area_m2, remaining_area_m2, last_updated_at
       ) VALUES (
         ${occupancy.id},
         ${occupancy.blockId},
         ${occupancy.blockAddress ?? null},
         ${occupancy.blockAreaM2 ?? null},
         ${occupancy.companyId},
-        ${occupancy.productId},
         ${occupancy.occupiedAreaM2 ?? null},
         ${occupancy.remainingAreaM2 ?? null},
         ${occupancy.lastUpdatedAt}
@@ -39,7 +37,6 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
       blockAddress: row.block_address,
       blockAreaM2: row.block_area_m2 ?? undefined,
       companyId: row.company_id,
-      productId: row.product_id,
       occupiedAreaM2: row.occupied_area_m2,
       remainingAreaM2: row.remaining_area_m2,
       lastUpdatedAt: row.last_updated_at
@@ -55,7 +52,6 @@ export class BlockOccupancyRepository implements IBlockOccupancyRepository {
       blockAddress: row.block_address,
       blockAreaM2: row.block_area_m2 ?? undefined,
       companyId: row.company_id,
-      productId: row.product_id,
       occupiedAreaM2: row.occupied_area_m2,
       remainingAreaM2: row.remaining_area_m2,
       lastUpdatedAt: row.last_updated_at

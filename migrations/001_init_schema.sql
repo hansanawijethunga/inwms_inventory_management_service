@@ -109,7 +109,6 @@ CREATE TABLE BlockOccupancy (
     block_address TEXT,
     block_area_m2 NUMERIC,
     company_id UUID NOT NULL,
-    product_id UUID NOT NULL,
     occupied_area_m2 NUMERIC,
     remaining_area_m2 NUMERIC,
     last_updated_at TIMESTAMP NOT NULL
