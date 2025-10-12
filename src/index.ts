@@ -5,6 +5,7 @@ import express from 'express';
 import { jwtAuth } from './middleware/jwtAuth.js';
 import { roleAuth } from './middleware/roleAuth.js';
 import bodyParser from 'body-parser';
+import cors from 'cors';
 import { StockReceiptController } from './controllers/StockReceiptController.js';
 import { InventoryShipmentController } from './controllers/InventoryShipmentController.js';
 import { InventoryBalanceController } from './controllers/InventoryBalanceController.js';
@@ -14,7 +15,9 @@ import { BlockSpaceController } from './controllers/BlockSpaceController.js';
 
 
 
+
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 app.use(jwtAuth()); // Apply authentication to all APIs
 
