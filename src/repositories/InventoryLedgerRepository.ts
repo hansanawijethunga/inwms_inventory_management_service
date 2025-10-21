@@ -158,20 +158,19 @@ export class InventoryLedgerRepository implements IInventoryLedgerRepository {
   let query = 'SELECT * FROM inventoryledger WHERE 1=1';
     const params: any[] = [];
     if (filter.companyId) {
-      // cast uuid column to text so non-UUID (e.g. mongo ObjectId) strings can be matched
-      query += ' AND company_id::text = $' + (params.length + 1);
+      query += ' AND company_id = $' + (params.length + 1);
       params.push(Array.isArray(filter.companyId) ? filter.companyId[0] : filter.companyId);
     }
     if (filter.productId) {
-      query += ' AND product_id::text = $' + (params.length + 1);
+      query += ' AND product_id = $' + (params.length + 1);
       params.push(Array.isArray(filter.productId) ? filter.productId[0] : filter.productId);
     }
     if (filter.receiptLineId) {
-      query += ' AND receipt_line_id::text = $' + (params.length + 1);
+      query += ' AND receipt_line_id = $' + (params.length + 1);
       params.push(Array.isArray(filter.receiptLineId) ? filter.receiptLineId[0] : filter.receiptLineId);
     }
     if (filter.blockId) {
-      query += ' AND block_id::text = $' + (params.length + 1);
+      query += ' AND block_id = $' + (params.length + 1);
       params.push(Array.isArray(filter.blockId) ? filter.blockId[0] : filter.blockId);
     }
     // Filter by type (validate allowed types)
