@@ -79,15 +79,16 @@ export class InventoryBalanceRepository implements IInventoryBalanceRepository {
     let query = 'SELECT * FROM inventorybalance WHERE 1=1';
     const params: any[] = [];
     if (filter.companyId) {
-      query += ' AND company_id = $' + (params.length + 1);
+      // allow mongo-style ids by comparing the uuid column as text
+      query += ' AND company_id::text = $' + (params.length + 1);
       params.push(Array.isArray(filter.companyId) ? filter.companyId[0] : filter.companyId);
     }
     if (filter.productId) {
-      query += ' AND product_id = $' + (params.length + 1);
+      query += ' AND product_id::text = $' + (params.length + 1);
       params.push(Array.isArray(filter.productId) ? filter.productId[0] : filter.productId);
     }
     if (filter.blockId) {
-      query += ' AND block_id = $' + (params.length + 1);
+      query += ' AND block_id::text = $' + (params.length + 1);
       params.push(Array.isArray(filter.blockId) ? filter.blockId[0] : filter.blockId);
     }
       const result = await sqlOrTx.unsafe(query, params);

@@ -35,7 +35,9 @@ export class InventoryBalanceController {
   static async list(req: Request, res: Response) {
     try {
       // Optional filters: companyId, productId, blockId, condition, expiryDate
-      const filters = req.query;
+      const filters = req.query as any;
+      // Note: we intentionally accept non-UUID id strings (e.g. mongo ObjectId) and let
+      // repositories compare UUID columns as text (company_id::text) to support that.
       const balances = await inventoryBalanceService.listBalances(filters);
       res.json(balances);
     } catch (err: any) {
