@@ -59,6 +59,7 @@ app.get('/inventory/receipts/:id', StockReceiptController.getReceiptById);
 app.get('/inventory/companies/:companyId/products/:productId/stock', InventoryProductStockController.getByProductId);
 app.get('/inventory/companies/:companyId/shipments/:shipment_id', InventoryShipmentQueryController.getByShipmentId);
 app.get('/inventory/blocks/space', BlockSpaceController.getAvailableSpace);
+app.get('/inventory/companies/:companyId/receipts', InventoryShipmentQueryController.getReceiptsWithStockByCompany);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

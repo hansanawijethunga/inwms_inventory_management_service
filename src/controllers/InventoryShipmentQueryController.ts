@@ -17,4 +17,18 @@ export class InventoryShipmentQueryController {
       res.status(400).json({ error: err.message });
     }
   }
+
+  static async getReceiptsWithStockByCompany(req: Request, res: Response) {
+    try {
+      const { companyId } = req.params;
+      if (!companyId) {
+        res.status(400).json({ error: 'companyId is required' });
+        return;
+      }
+      const results = await receiptRepo.findHeadersWithPositiveLinesByCompany(companyId);
+      res.json(results);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  }
 }

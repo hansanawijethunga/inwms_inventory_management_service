@@ -8,4 +8,5 @@ export interface IStockReceiptRepository {
   findLinesByReceiptId(receiptId: string, sqlOrTx?: any): Promise<StockReceiptLine[]>;
   findByShipmentId?(shipmentId: string, sqlOrTx?: any): Promise<StockReceiptHeader[]>;
   findByLotNumber?(lotNumber: string, sqlOrTx?: any): Promise<StockReceiptHeader[]>;
+  findHeadersWithPositiveLinesByCompany?(companyId: string, sqlOrTx?: any): Promise<any[]>;
 }

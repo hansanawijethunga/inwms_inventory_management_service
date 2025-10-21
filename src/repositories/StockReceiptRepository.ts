@@ -272,4 +272,67 @@ export class StockReceiptRepository implements IStockReceiptRepository {
       createdAt: row.created_at
     }));
   }
+
+  async findHeadersWithPositiveLinesByCompany(companyId: string, sqlOrTx = sql): Promise<any[]> {
+    // Fetch headers and their lines where line.quantity > 0 for the given company
+    const rows = await sqlOrTx`
+      SELECT
+        h.id AS header_id,
+        h.shipment_id AS header_shipment_id,
+        h.shipment_number AS header_shipment_number,
+        h.lot_number AS header_lot_number,
+        h.inventory_date AS header_inventory_date,
+        h.company_id AS header_company_id,
+        h.company_legal_name AS header_company_legal_name,
+        h.notes AS header_notes,
+        h.created_by AS header_created_by,
+        h.created_at AS header_created_at,
+        l.id AS line_id,
+        l.receipt_id AS line_receipt_id,
+        l.product_id AS line_product_id,
+        l.product_name AS line_product_name,
+        l.product_code AS line_product_code,
+        l.quantity AS line_quantity,
+        l.uom AS line_uom,
+        l.block_id AS line_block_id,
+        l.block_address AS line_block_address
+      FROM stockreceiptheader h
+      JOIN stockreceiptline l ON l.receipt_id::text = h.id::text
+      WHERE h.company_id::text = ${companyId} AND COALESCE(l.quantity, 0) > 0
+      ORDER BY h.created_at DESC
+    `;
+    // Group rows by header id
+    const map = new Map<string, any>();
+    for (const row of rows) {
+      const headerId = String(row.header_id);
+      if (!map.has(headerId)) {
+        map.set(headerId, {
+          id: row.header_id,
+          shipmentId: row.header_shipment_id,
+          shipmentNumber: row.header_shipment_number,
+          lotNumber: row.header_lot_number,
+          inventoryDate: row.header_inventory_date,
+          companyId: row.header_company_id,
+          companyLegalName: row.header_company_legal_name,
+          notes: row.header_notes ?? undefined,
+          createdBy: row.header_created_by ?? undefined,
+          createdAt: row.header_created_at,
+          lines: [] as any[]
+        });
+      }
+      const header = map.get(headerId);
+      header.lines.push({
+        id: row.line_id,
+        receiptId: row.line_receipt_id,
+        productId: row.line_product_id,
+        productName: row.line_product_name,
+        productCode: row.line_product_code,
+        quantity: row.line_quantity,
+        uom: row.line_uom,
+        blockId: row.line_block_id,
+        blockAddress: row.line_block_address
+      });
+    }
+    return Array.from(map.values());
+  }
 }
