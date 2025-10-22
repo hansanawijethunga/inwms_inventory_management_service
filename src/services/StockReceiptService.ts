@@ -8,6 +8,9 @@ import type { IInventoryLedgerRepository } from '../domain/interfaces/IInventory
 import type { IInventoryBalanceRepository } from '../domain/interfaces/IInventoryBalanceRepository.js';
 import type { IBlockOccupancyRepository } from '../domain/interfaces/IBlockOccupancyRepository.js';
 import sql from '../infrastructure/db.js';
+import { v5 as uuidv5 } from 'uuid';
+
+const NAMESPACE = uuidv5('inwms-inventory-namespace', uuidv5.URL);
 
 export class StockReceiptService {
   constructor(
@@ -33,8 +36,28 @@ export class StockReceiptService {
     // const existingShipment = await this.repository.findByShipmentId(header.shipmentId);
     // if (existingShipment) throw new Error('Duplicate shipmentId');
 
+    // Normalize productId/blockId: accept UUID or 24-char mongo id by mapping mongo ids to deterministic UUIDv5
+    const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
+    const uuidRegexLoose = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    const normalizeId = (id: string) => {
+      if (!id) return id;
+      if (uuidRegexLoose.test(id)) return id; // already UUID-like
+      if (mongoIdRegex.test(id)) return uuidv5(id, NAMESPACE);
+      return id;
+    };
+
+    // Clone lines with normalized ids so we don't mutate the original objects
+    const normalizedLines = lines.map(l => {
+      const nl = {
+        ...l,
+        productId: normalizeId(l.productId),
+        blockId: normalizeId(l.blockId),
+      } as any;
+      return new StockReceiptLine(nl as any);
+    });
+
     // Validate each line
-    for (const [i, line] of lines.entries()) {
+  for (const [i, line] of normalizedLines.entries()) {
       // Required fields (explicit access)
       if (!line.productId) throw new Error(`Line ${i + 1}: Field 'productId' is required`);
       if (!line.productName) throw new Error(`Line ${i + 1}: Field 'productName' is required`);
@@ -48,14 +71,10 @@ export class StockReceiptService {
       if (!header.companyId) throw new Error('companyId is required');
 
       // Type checks: accept either standard UUID or Mongo ObjectId (24 hex chars)
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
-      if (!(uuidRegex.test(line.productId) || mongoIdRegex.test(line.productId))) {
-        throw new Error(`Line ${i + 1}: productId must be a valid UUID or a 24-character hex id`);
-      }
-      if (!(uuidRegex.test(line.blockId) || mongoIdRegex.test(line.blockId))) {
-        throw new Error(`Line ${i + 1}: blockId must be a valid UUID or a 24-character hex id`);
-      }
+      // productId/blockId are already normalized to UUID-like values
+      const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+      if (!uuidRegex.test(line.productId)) throw new Error(`Line ${i + 1}: productId must be a valid UUID after normalization`);
+      if (!uuidRegex.test(line.blockId)) throw new Error(`Line ${i + 1}: blockId must be a valid UUID after normalization`);
       if (typeof line.quantity !== 'number' || line.quantity <= 0) throw new Error(`Line ${i + 1}: quantity must be a positive number`);
       const allowedConditions = ['Good', 'Damaged', 'Expired'];
       if (!allowedConditions.includes(line.condition)) throw new Error(`Line ${i + 1}: condition must be one of: ${allowedConditions.join(', ')}`);
@@ -81,7 +100,7 @@ export class StockReceiptService {
     }
 
     // Block capacity validation (async, needs DB)
-    for (const [i, line] of lines.entries()) {
+  for (const [i, line] of normalizedLines.entries()) {
       const neededArea = (line.productAreaM2 || 0) * (line.quantity || 0);
       const block = await this.occupancyRepository.findByBlockAndCompany(line.blockId, header.companyId);
       let remaining: number;
@@ -109,7 +128,7 @@ export class StockReceiptService {
       await this.repository.saveHeader(header, tx);
       // Save all lines
       for (const line of lines) {
-        await this.repository.saveLine(line, tx);
+  await this.repository.saveLine(line, tx);
         // Record ledger entry
         const ledger = new InventoryLedger({
           type: InventoryLedgerType.RECEIVE,

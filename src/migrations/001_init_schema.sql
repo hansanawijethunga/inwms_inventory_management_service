@@ -53,7 +53,7 @@ CREATE TABLE InventoryBalance (
     product_id TEXT NOT NULL,
     product_name TEXT,
     product_code TEXT,
-    block_id UUID NOT NULL,
+    block_id TEXT NOT NULL,
     block_address TEXT,
     condition TEXT,
     expiry_date DATE,
