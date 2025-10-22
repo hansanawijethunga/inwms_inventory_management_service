@@ -47,10 +47,15 @@ export class StockReceiptService {
       if (!line.createdAt) throw new Error(`Line ${i + 1}: Field 'createdAt' is required`);
       if (!header.companyId) throw new Error('companyId is required');
 
-      // Type checks
+      // Type checks: accept either standard UUID or Mongo ObjectId (24 hex chars)
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(line.productId)) throw new Error(`Line ${i + 1}: productId must be a valid UUID`);
-      if (!uuidRegex.test(line.blockId)) throw new Error(`Line ${i + 1}: blockId must be a valid UUID`);
+      const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
+      if (!(uuidRegex.test(line.productId) || mongoIdRegex.test(line.productId))) {
+        throw new Error(`Line ${i + 1}: productId must be a valid UUID or a 24-character hex id`);
+      }
+      if (!(uuidRegex.test(line.blockId) || mongoIdRegex.test(line.blockId))) {
+        throw new Error(`Line ${i + 1}: blockId must be a valid UUID or a 24-character hex id`);
+      }
       if (typeof line.quantity !== 'number' || line.quantity <= 0) throw new Error(`Line ${i + 1}: quantity must be a positive number`);
       const allowedConditions = ['Good', 'Damaged', 'Expired'];
       if (!allowedConditions.includes(line.condition)) throw new Error(`Line ${i + 1}: condition must be one of: ${allowedConditions.join(', ')}`);
